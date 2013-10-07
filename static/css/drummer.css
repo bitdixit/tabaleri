@@ -1,0 +1,24 @@
+.canvas-box-out
+{
+	background-color: #ECECDF;
+	padding: 10px;
+}
+
+.canvas-box-in
+{
+	background-color: #FFF;
+	padding: 10px;
+	
+}
+
+.score
+{
+	font-size: 36px;
+	float: right;
+}
+
+canvas#drawingCanvas
+{
+	margin-top: 10px;
+	margin-left: 60px;
+}
