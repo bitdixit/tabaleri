@@ -76,5 +76,15 @@ exports.getsongs = function(req, res) {
     });
 };
  
+exports.getauth = function(req, res) {
+    if (req.params.password=='1111') 
+    {
+      res.jsonp({success: true});
+
+    } else
+    {
+      res.jsonp({success: false});      
+    }
+};
 
 

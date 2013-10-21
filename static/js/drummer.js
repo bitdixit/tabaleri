@@ -12,7 +12,7 @@ var beatSongCurrentPosIndex = 0;
 var score=0;
 var recording = false;
 var currentSongId=null;
-var adminKey ="aa";
+var adminKey ='';
 
 function drawCanvas()
 {
@@ -22,7 +22,7 @@ function drawCanvas()
 	var BOTTOM_SIZE  = 300;
 	
 	var MS_PER_PIXEL = 5;
-	var DOT_SIZE_X   = 50;
+	var DOT_SIZE_X   = 150;
 	var DOT_SIZE_Y   = 20;
 	var TIME_OFFSET  = 1000;
 	
@@ -146,6 +146,7 @@ function reloadSongs()
 		$("#song-table").html(songTableItems.join(''));
 		$("#song-select").html(songSelectItems.join(''));
 		$("#song-select").change();
+
 	});	
 }
 
@@ -154,6 +155,8 @@ function deleteSong(id)
 	$.ajax({
 		url: '/api/songs/'+id,
 		type: 'DELETE',
+		username: adminKey,
+  		password: adminKey,
 		success: function(result) {
 			reloadSongs();
 		}
@@ -168,19 +171,19 @@ function emptySong(id)
 
 function setAdminMode(pass)
 {
-	if (pass!='1111')
+	$.getJSON( "/api/auth/"+pass, function( data )
 	{
-		adminKey='';
-		$("#record").hide();
-		reloadSongs();
-		return false;
-	} else
-	{
-		adminKey=pass;
-		$("#record").show();
-		reloadSongs();
-		return true;
-	}
+		if (data.success==false)
+		{
+			bootbox.alert("Aquesta no es" , {}, function() {} );
+		} else
+		{
+			adminKey=pass;
+			$("#record").show();
+			reloadSongs();
+			$('#menu-gestio').trigger('click');
+		}
+	});
 }
 
 $(function()
@@ -199,7 +202,10 @@ $(function()
 		var audio = $('#audio').get(0);
 		startTime=new Date().getTime();
 		beatEvents=Array();
-		beatSongCurrentPosIndex=0;
+		if (beatSong.length > 0)
+			beatSongCurrentPosIndex=0;
+		else
+			beatSongCurrentPosIndex=-1;
 		score=0;
 		audio.currentTime = 0;
 		audio.play();
@@ -224,8 +230,10 @@ $(function()
 				type: 'PUT',
 				contentType: "application/json; charset=utf-8",
     			dataType: "json",
+    			username: adminKey,
+  				password: adminKey,
 				data: JSON.stringify({ score: beatEvents }),
-				success: function(result) { }
+				success: function(result) {  reloadSongs(); }
 			});	
 				
 
@@ -237,7 +245,7 @@ $(function()
 		var audio = $('#audio').get(0);
 		startTime=new Date().getTime();
 		beatEvents=Array();
-		beatSongCurrentPosIndex=0;
+		beatSongCurrentPosIndex=-1;
 		score=0;
 		audio.currentTime = 0;
 		audio.play();
@@ -264,10 +272,10 @@ $(function()
 	$('#menu a').click(function (e) {
 		if ($(this).text()=='Gestio' && adminKey=='')
 		{
-			bootbox.prompt("Contrassenya?", function(result)
+			bootbox.prompt("Contrassenya?",'password', function(result)
 			{
-				if (setAdminMode(result))
-					$('#menu-gestio').trigger('click');
+				setAdminMode(result);
+					
 			});
 		} else
 		{
@@ -282,13 +290,19 @@ $(function()
 	});
 
 	$('#upload').click(function (e) {
-		$('#file_upload').ajaxSubmit(function() { 
-			reloadSongs();
-			$('#songname').val('');
-			$('#mp3').val('');
-			$('#admin-tab-header-songs').trigger('click');
-			bootbox.alert("Canco afegida", function() {});
-		}); 
+		$('#file_upload').ajaxSubmit( {
+			beforeSend: function(data) {
+				var auth = "Basic " + $.base64.encode(adminKey + ":" + adminKey);
+				data.setRequestHeader("Authorization", auth);
+			},
+
+			complete: function(xhr) {
+				reloadSongs();
+				$('#songname').val('');
+				$('#mp3').val('');
+				$('#admin-tab-header-songs').trigger('click');
+				bootbox.alert("Canco afegida", function() {});
+			} }); 
 	});
 
 	$('#admin-tabs .tab a').each(function() {
@@ -312,10 +326,18 @@ $(function()
 		{
 			$("#audiodiv").html('<audio src="/api/songs/'+id+'/mp3" id="audio" controls="controls"></audio>');
 			currentSongId = id;
-			beatSong=JSON.parse(idsongbeat);
+			if (idsongbeat!='undefined')
+			{
+				$("#start").show();
+				beatSong=JSON.parse(idsongbeat);
+			} else
+			{
+				$("#start").hide();
+				beatSong=Array();
+			}	
 		}
 	});
 
-	setAdminMode('');
+	$("#record").hide();
 	reloadSongs();
 });

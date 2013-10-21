@@ -1,11 +1,11 @@
 {
-    "name": "employee-directory-api",
-    "description": "Employee Directory API",
+    "name": "Tabaleri",
+    "description": "Tabaleri the drummer",
     "version": "0.0.1",
     "private": true,
     "engines": { "node": "0.8.x" },
     "dependencies": {
         "express": "3.x",
-        "mongodb": "*"
+        "mongodb": "1.3.x"
     }
 }
